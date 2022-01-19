@@ -16,7 +16,16 @@ Plane::~Plane()
 
 bool Plane::intersect(const Ray& ray, Hit& hit) const
 {
-    /// TODO
+    if ((m_position - ray.origin).dot(m_normal) == 0 || ray.direction.dot(m_normal) == 0)
+        return false;
+
+    const float t = (m_position - ray.origin).dot(m_normal) / ray.direction.dot(m_normal);
+
+    if (t <= 0)
+        return false;
+
+    hit.setShape(this);
+    hit.setT(t);
 
     return true;
 }
