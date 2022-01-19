@@ -23,11 +23,13 @@ void render(Scene* scene, ImageBlock* result, std::string outputName, bool* done
 
     const Point3f origin = camera->position();
 
-    for (unsigned int y = 0; y < height; y++)
-        for (unsigned int x = 0; x < width; x++)
+    for (float y = 0.f; y < height; y++)
+        for (float x = 0.f; x < width; x++)
         {
-            const Vector3f direction = camF + 2 * (float(x) / width - .5) * camX + 2 * (float(y) / height - .5) * camY;
+            const Vector3f direction = camF + 2.f * (x / width - .5f) * camX + 2.f* (y / height - .5f) * camY;
             const Ray ray(origin, direction.normalized());
+            const Color3f color = integrator->Li(scene, ray);
+            result->put(Vector2f(x, y), color);
         }
 
     t = clock() - t;
