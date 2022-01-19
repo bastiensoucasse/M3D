@@ -18,11 +18,17 @@ void render(Scene* scene, ImageBlock* result, std::string outputName, bool* done
     Vector3f camY = -camera->up() * tanfovy2 * camera->nearDist();
     Vector3f camF = camera->direction() * camera->nearDist();
 
-    /// TODO:
-    ///  1. iterate over the image pixels
-    ///  2. generate a primary ray
-    ///  3. call the integartor to compute the color along this ray
-    ///  4. write this color in the result image
+    const unsigned int width = camera->vpWidth();
+    const unsigned int height = camera->vpHeight();
+
+    const Point3f origin = camera->position();
+
+    for (unsigned int y = 0; y < height; y++)
+        for (unsigned int x = 0; x < width; x++)
+        {
+            const Vector3f direction = camF + 2 * (float(x) / width - .5) * camX + 2 * (float(y) / height - .5) * camY;
+            const Ray ray(origin, direction.normalized());
+        }
 
     t = clock() - t;
     std::cout << "Raytracing time : " << float(t)/CLOCKS_PER_SEC << "s"<<std::endl;
