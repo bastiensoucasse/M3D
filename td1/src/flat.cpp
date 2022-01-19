@@ -3,11 +3,9 @@
 
 class FlatIntegrator : public Integrator {
 public:
-    FlatIntegrator(const PropertyList &props) {
-        /* No parameters this time */
-    }
+    FlatIntegrator(const PropertyList& props) { }
 
-    Color3f Li(const Scene *scene, const Ray &ray) const {
+    Color3f Li(const Scene* scene, const Ray& ray) const {
         Hit hit;
 
         scene->intersect(ray, hit);

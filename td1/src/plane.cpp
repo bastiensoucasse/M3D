@@ -1,21 +1,15 @@
 #include "plane.h"
 
-Plane::Plane()
-{
+Plane::Plane() { }
+
+Plane::Plane(const PropertyList& propList) {
+    m_position = propList.getPoint("position", Point3f(0.f));
+    m_normal = propList.getVector("normal", Point3f(0.f, 0.f, 1.f));
 }
 
-Plane::Plane(const PropertyList &propList)
-{
-    m_position = propList.getPoint("position",Point3f(0,0,0));
-    m_normal = propList.getVector("normal",Point3f(0,0,1));
-}
+Plane::~Plane() { }
 
-Plane::~Plane()
-{
-}
-
-bool Plane::intersect(const Ray& ray, Hit& hit) const
-{
+bool Plane::intersect(const Ray& ray, Hit& hit) const {
     if ((m_position - ray.origin).dot(m_normal) == 0 || ray.direction.dot(m_normal) == 0)
         return false;
 
