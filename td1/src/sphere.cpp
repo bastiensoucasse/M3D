@@ -48,8 +48,12 @@ bool Sphere::intersect(const Ray& ray, Hit& hit) const
     if (t <= 0)
         return false;
 
+    const Point3f intersection = ray.origin + ray.direction * t;
+    const Normal3f normal = (intersection - m_center).normalized();
+
     hit.setShape(this);
     hit.setT(t);
+    hit.setNormal(normal);
 
     return true;
 }
