@@ -18,6 +18,13 @@ public:
         const Point3f intersection_point = ray.origin + ray.direction * hit.t();
 
         for (const Light* light : scene->lightList()) {
+            const Ray lightRay(intersection_point + hit.normal() * 10e-4, light->direction(intersection_point).normalized());
+            Hit lightHit;
+
+            scene->intersect(lightRay, lightHit);
+            if (lightHit.foundIntersection() && lightHit.shape())
+                continue;
+
             const Color3f rho = hit.shape()->material()->brdf(-ray.direction, light->direction(intersection_point), hit.normal());
             color += rho * std::max(light->direction(intersection_point).dot(hit.normal()), 0.f) * light->intensity(intersection_point);
         }
