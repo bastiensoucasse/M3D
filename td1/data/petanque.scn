@@ -3,7 +3,12 @@
 
  <color name="background" value="0.2, 0.2, 0.2"/>
 
- <integrator type="flat" />
+ <!-- <integrator type="flat" /> -->
+
+ <!-- Use Whitted integrator -->
+ <integrator type="whitted">
+    <integer name="maxRecursion" value="4" />
+ </integrator>
 
  <camera type="perspective">
    <float name="fieldOfView" value="45.0" /> 

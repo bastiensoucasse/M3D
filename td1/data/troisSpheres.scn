@@ -4,7 +4,13 @@
   <color name="background" value="0.5, 0.5, 0.5"/>
 
  <!-- Use the direct color integrator -->
- <integrator type="direct"/>
+ <!-- <integrator type="direct"/> -->
+
+ <!-- Use Whitted integrator -->
+ <integrator type="whitted">
+    <integer name="maxRecursion" value="4" />
+ </integrator>
+
 
  <!-- Render the scene as viewed by a perspective camera -->
  <camera type="perspective">
