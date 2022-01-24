@@ -14,11 +14,9 @@ public:
     Color3f Li(const Scene *scene, const Ray &ray) const
     {
         Hit hit;
-
         scene->intersect(ray, hit);
-
         if (!hit.foundIntersection())
-            return scene->backgroundColor();
+            return ray.recursionLevel == 0 ? scene->backgroundColor() : Color3f(0.f);
 
         Color3f color = Color3f(0.f);
 
@@ -26,15 +24,17 @@ public:
 
         for (const Light *light : scene->lightList())
         {
-            const Ray lightRay(intersection_point + hit.normal() * 10e-4, light->direction(intersection_point).normalized());
-            Hit lightHit;
+            float ldist;
+            const Vector3f ldir = light->direction(intersection_point, (&ldist));
+            const Ray lray(intersection_point + hit.normal() * 10e-4, ldir.normalized());
 
-            scene->intersect(lightRay, lightHit);
-            if (lightHit.foundIntersection() && lightHit.shape())
+            Hit lhit;
+            scene->intersect(lray, lhit);
+            if (lhit.foundIntersection() && (ldist == std::numeric_limits<float>::max() || ldist > lhit.t()))
                 continue;
 
-            const Color3f rho = hit.shape()->material()->brdf(-ray.direction, light->direction(intersection_point), hit.normal());
-            color += rho * std::max(light->direction(intersection_point).dot(hit.normal()), 0.f) * light->intensity(intersection_point);
+            const Color3f rho = hit.shape()->material()->brdf(-ray.direction, ldir, hit.normal());
+            color += rho * std::max(ldir.dot(hit.normal()), 0.f) * light->intensity(intersection_point);
         }
 
         if (ray.recursionLevel < m_maxRecursion)

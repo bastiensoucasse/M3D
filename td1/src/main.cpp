@@ -2,14 +2,15 @@
 
 #include "viewer.h"
 
-void render(Scene* scene, ImageBlock* result, std::string outputName, bool* done) {
+void render(Scene *scene, ImageBlock *result, std::string outputName, bool *done)
+{
     if (!scene)
         return;
 
     clock_t t = clock();
 
-    const Camera* camera = scene->camera();
-    const Integrator* integrator = scene->integrator();
+    const Camera *camera = scene->camera();
+    const Integrator *integrator = scene->integrator();
     integrator->preprocess(scene);
 
     float tanfovy2 = tan(camera->fovY() * .5f);
@@ -23,7 +24,8 @@ void render(Scene* scene, ImageBlock* result, std::string outputName, bool* done
     const Point3f origin = camera->position();
 
     for (float y = 0.f; y < height; y++)
-        for (float x = 0.f; x < width; x++) {
+        for (float x = 0.f; x < width; x++)
+        {
             const Vector3f direction = camF + 2.f * (x / width - .5f) * camX + 2.f * (y / height - .5f) * camY;
             const Ray ray(origin, direction.normalized());
             const Color3f color = integrator->Li(scene, ray);
@@ -36,14 +38,17 @@ void render(Scene* scene, ImageBlock* result, std::string outputName, bool* done
     *done = true;
 }
 
-int main(const int argc, const char** argv) {
+int main(const int argc, const char **argv)
+{
     getFileResolver()->prepend(DATA_DIR);
 
-    try {
+    try
+    {
         nanogui::init();
-        Viewer* screen = new Viewer();
+        Viewer *screen = new Viewer();
 
-        if (argc == 2) {
+        if (argc == 2)
+        {
             filesystem::path path(argv[1]);
 
             if (path.extension() == "scn")
@@ -56,7 +61,9 @@ int main(const int argc, const char** argv) {
 
         delete screen;
         nanogui::shutdown();
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception &e)
+    {
         cerr << "Fatal error: " << e.what() << endl;
         return EXIT_FAILURE;
     }

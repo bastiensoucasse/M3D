@@ -3,10 +3,10 @@
 <scene>
   <color name="background" value="0.5, 0.5, 0.5"/>
 
- <!-- Use the direct color integrator -->
- <!-- <integrator type="direct"/> -->
+ <!-- Use the flat integrator -->
+ <!-- <integrator type="flat"/> -->
 
- <!-- Use Whitted integrator -->
+ <!-- Use the whitted integrator -->
  <integrator type="whitted">
     <integer name="maxRecursion" value="4" />
  </integrator>
