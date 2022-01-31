@@ -9,12 +9,13 @@
 #include <filesystem/resolver.h>
 #include <tiny_obj_loader.h>
 
-#define USE_BVH false
+#define USE_BVH true
 
 Mesh::Mesh(const PropertyList &propList) : m_BVH(nullptr)
 {
     std::string filename = propList.getString("filename");
     loadFromFile(filename);
+
     if (USE_BVH)
         buildBVH();
 }
@@ -249,21 +250,15 @@ bool Mesh::intersect(const Ray &ray, Hit &hit) const
     if ((!::intersect(ray, m_AABB, tMin, tMax, normal)) || tMin > hit.t())
         return false;
 
-    if (USE_BVH)
-    {
-        if (m_BVH->intersect(ray, hit))
-            return false;
-    }
+    if (USE_BVH && m_BVH)
+        return m_BVH->intersect(ray, hit);
     else
     {
         bool ok = false;
         Hit faceHit;
         for (size_t faceId = 0; faceId < m_faces.size(); faceId++)
             if (intersectFace(ray, faceHit, faceId) && faceHit.t() < hit.t())
-            {
-                hit = faceHit;
-                ok = true;
-            }
+                hit = faceHit, ok = true;
         return ok;
     }
 }
