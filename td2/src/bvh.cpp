@@ -89,7 +89,7 @@ void BVH::buildNode(int nodeId, int start, int end, int level, int targetCellSiz
 
     // Compute the axis according to which to split the box, and the split value associated.
     unsigned int dim = std::distance(sizes, std::max_element(sizes, sizes + 3));
-    float split_value = sizes[dim] / 2;
+    float split_value = node.box.center()[dim];
     printf("[DEBUG] dim = %d, split_value = %f.\n", dim, split_value);
 
     /**
@@ -101,7 +101,7 @@ void BVH::buildNode(int nodeId, int start, int end, int level, int targetCellSiz
     printf("[DEBUG] middle = %d.\n", middle);
 
     // Check if the split was useful.
-    if (middle == start || middle == end) {
+    if (middle <= start || middle >= end) {
         // Set the node as leaf.
         node.is_leaf = true;
         printf("[DEBUG] node.is_leaf = true.\n");
@@ -133,7 +133,7 @@ void BVH::buildNode(int nodeId, int start, int end, int level, int targetCellSiz
 
 /**
  * @brief Sorts the faces with respect to their centroid along the dimension @a dim and spliting value @a split_value.
- * 
+ *
  * @returns the middle index
  */
 int BVH::split(int start, int end, int dim, float split_value)
@@ -158,7 +158,7 @@ int BVH::split(int start, int end, int dim, float split_value)
 bool BVH::intersect(const Ray& ray, Hit& hit) const
 {
     int nodeId = 0;
-    printf("\n[DEBUG] Intersecting node %d…\n", nodeId);
+    // printf("\n[DEBUG] Intersecting node %d…\n", nodeId);
 
     // Retrieve the node.
     const Node& node = m_nodes[nodeId];
@@ -179,7 +179,7 @@ bool BVH::intersect(const Ray& ray, Hit& hit) const
 
 bool BVH::intersectNode(int nodeId, const Ray& ray, Hit& hit) const
 {
-    printf("[DEBUG] Intersecting node %d…\n", nodeId);
+    // printf("[DEBUG] Intersecting node %d…\n", nodeId);
 
     // Retrieve the node.
     const Node& node = m_nodes[nodeId];
@@ -205,7 +205,7 @@ bool BVH::intersectNode(int nodeId, const Ray& ray, Hit& hit) const
     for (int face_id = node.first_face_id; face_id < node.first_face_id + node.nb_faces; face_id++)
         if (m_pMesh->intersectFace(ray, face_hit, face_id) && face_hit.t() < hit.t())
             hit = face_hit, found_intersection = true;
-    if (found_intersection)
-        printf("[DEBUG] Intersection found.\n");
+    // if (found_intersection)
+    //     printf("[DEBUG] Intersection found.\n");
     return found_intersection;
 }
