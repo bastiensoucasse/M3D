@@ -30,11 +30,13 @@ public:
 
 private:
     int _winWidth, _winHeight;
+    float _zoom;
+    Eigen::Vector2f _translate{0, 0};
 
     Camera _cam;
     Shader _shader;
     Mesh   _mesh;
-
+    
 
     // Mouse parameters for the trackball
     enum TrackMode
