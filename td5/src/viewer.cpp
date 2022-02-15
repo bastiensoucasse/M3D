@@ -21,11 +21,7 @@ void Viewer::init(int w, int h)
 {
     loadShaders();
 
-    // if(!_mesh.load(DATA_DIR"/models/quad.off"))
-    //     exit(1);
-    // if (!_mesh.load(DATA_DIR "/models/chair.off"))
-    //     exit(1);
-    if (!_mesh.load(DATA_DIR "/models/lemming.off"))
+    if (!_mesh.load(DATA_DIR "/models/monkey2.obj"))
         exit(1);
 
     _mesh.initVBA();
@@ -33,11 +29,7 @@ void Viewer::init(int w, int h)
     reshape(w, h);
 
     _cam.setPerspective(M_PI / 3, .1f, 20000.f);
-    _cam.lookAt(
-        Vector3f(-2.f, 2, -2.f),
-        Vector3f(0.f, 0.f, 0.f),
-        Vector3f(0.f, 1.f, 0.f)
-    );
+    _cam.lookAt(Vector3f(-2.f, 2.f, -2.f), Vector3f(0.f, 0.f, 0.f), Vector3f(0.f, 1.f, 0.f));
     _trackball.setCamera(&_cam);
 
     glClearColor(0.5, 0.5, 0.5, 1);
