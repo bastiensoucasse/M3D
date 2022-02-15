@@ -1,14 +1,14 @@
 #ifndef VIEWER_H
 #define VIEWER_H
 
-#include "shader.h"
 #include "camera.h"
-#include "trackball.h"
 #include "mesh.h"
+#include "shader.h"
+#include "trackball.h"
 
 #include <iostream>
 
-class Viewer{
+class Viewer {
 public:
     //! Constructor
     Viewer();
@@ -17,6 +17,7 @@ public:
     // gl stuff
     void init(int w, int h);
     void drawScene();
+    void drawScene2D();
     void updateAndDrawScene();
     void reshape(int w, int h);
     void loadShaders();
@@ -33,17 +34,19 @@ private:
 
     Camera _cam;
     Shader _shader;
-    Mesh   _mesh;
+    Mesh _mesh;
     float _zoom = 1;
-    Eigen::Vector2f _offset{0.f,0.f};
-    bool _wireframe=false;
-
+    Eigen::Vector2f _offset { 0.f, 0.f };
+    bool _wireframe = false;
 
     // Mouse parameters for the trackball
-    enum TrackMode
-    {
-      TM_NO_TRACK=0, TM_ROTATE_AROUND, TM_ZOOM,
-      TM_LOCAL_ROTATE, TM_FLY_Z, TM_FLY_PAN
+    enum TrackMode {
+        TM_NO_TRACK = 0,
+        TM_ROTATE_AROUND,
+        TM_ZOOM,
+        TM_LOCAL_ROTATE,
+        TM_FLY_Z,
+        TM_FLY_PAN
     };
     TrackMode _trackingMode = TM_NO_TRACK;
     Trackball _trackball;
