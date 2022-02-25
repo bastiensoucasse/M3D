@@ -1,4 +1,5 @@
 #include "camera.h"
+
 #include "opengl.h"
 
 using namespace Eigen;
@@ -6,7 +7,7 @@ using namespace Eigen;
 Camera::Camera()
 {
     mViewMatrix.setIdentity();
-    setPerspective(float(M_PI / 2.), 0.1f, 10000.f);
+    setPerspective(M_PI / 2, .1, 10000);
     setViewport(0, 0);
 }
 
@@ -14,15 +15,10 @@ void Camera::lookAt(const Vector3f& position, const Vector3f& target, const Vect
 {
     mTarget = target;
 
-    Vector3f d = target - position;
-    Vector3f z = -d.normalized();
-    Vector3f x = up.normalized().cross(z);
-    Vector3f y = z.cross(x);
-
     Matrix3f R;
-    R.col(0) = x;
-    R.col(1) = y;
-    R.col(2) = z;
+    R.col(2) = (position - target).normalized();
+    R.col(0) = up.cross(R.col(2)).normalized();
+    R.col(1) = R.col(2).cross(R.col(0));
 
     mViewMatrix.topLeftCorner(3, 3) = R.transpose();
     mViewMatrix.topRightCorner(3, 1) = -R.transpose() * position;
@@ -50,7 +46,7 @@ void Camera::zoom(float x)
 void Camera::rotateAroundTarget(float angle, Vector3f axis)
 {
     Vector3f t = Affine3f(mViewMatrix) * mTarget;
-    mViewMatrix = Affine3f(Translation3f(t) * AngleAxisf(angle, axis) * Translation3f(-t)) * mViewMatrix;
+    mViewMatrix = Affine3f(Translation3f(t) * AngleAxisf(angle, axis) * Translation3f(t).inverse()) * mViewMatrix;
 }
 
 Camera::~Camera()
@@ -65,17 +61,15 @@ const Matrix4f& Camera::viewMatrix() const
 Matrix4f Camera::projectionMatrix() const
 {
     float aspect = float(mVpWidth) / float(mVpHeight);
-    float theta = m_fovY * 0.5f;
+    float theta = .5 * m_fovY;
     float range = m_far - m_near;
-    float invtan = 1. / std::tan(theta);
+    float invtan = 1 / std::tan(theta);
 
-    Matrix4f projMat;
-    projMat.setZero();
-    projMat(0, 0) = invtan / aspect;
-    projMat(1, 1) = invtan;
-    projMat(2, 2) = -(m_near + m_far) / range;
-    projMat(2, 3) = -2 * m_near * m_far / range;
-    projMat(3, 2) = -1;
-
-    return projMat;
+    Matrix4f projection_matrix = Matrix4f::Zero();
+    projection_matrix(0, 0) = invtan / aspect;
+    projection_matrix(1, 1) = invtan;
+    projection_matrix(2, 2) = -(m_near + m_far) / range;
+    projection_matrix(2, 3) = -2 * m_near * m_far / range;
+    projection_matrix(3, 2) = -1;
+    return projection_matrix;
 }
