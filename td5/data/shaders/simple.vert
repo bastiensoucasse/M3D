@@ -15,25 +15,34 @@ uniform mat3 normal_matrix;
 // uniform vec3 light_direction;
 // uniform vec3 light_color;
 
-vec3 blinn(vec3 normal, vec3 view_direction, vec3 light_direction, vec3 fragment_color, vec3 light_color, float shininess)
-{
-    float ambient_term = 0.2;
-    vec3 ambient_color = fragment_color * ambient_term;
+// vec3 blinn(vec3 normal, vec3 view_direction, vec3 light_direction, vec3 fragment_color, vec3 light_color, float shininess)
+// {
+//     float ambient_term = 0.2;
+//     vec3 ambient_color = fragment_color * ambient_term;
 
-    float diffuse_term = max(dot(normal, light_direction), 0);
-    vec3 diffuse_color = fragment_color * diffuse_term;
+//     float diffuse_term = max(dot(normal, light_direction), 0);
+//     vec3 diffuse_color = fragment_color * diffuse_term;
 
-    float specular_term = pow(max(dot(normal, normalize(view_direction + light_direction)), 0), shininess);
-    vec3 specular_color = light_color * specular_term;
+//     float specular_term = pow(max(dot(normal, normalize(view_direction + light_direction)), 0), shininess);
+//     vec3 specular_color = light_color * specular_term;
 
-    return ambient_color + diffuse_color + specular_color;
-}
+//     // return ambient_color;
+//     // return diffuse_color;
+//     // return specular_color;
+//     return ambient_color + diffuse_color + specular_color;
+// }
 
 void main()
 {
+    // float shininess = 50;
+
     vec4 local_position = vec4(vertex_position, 1);
     vec4 world_position = transform_matrix * local_position;
     vec4 camera_position = view_matrix * world_position;
+
+    // vec3 var_view = normalize(-camera_position.xyz);
+    // vec3 var_normal = normalize(normal_matrix * vertex_normal);
+    // var_color = blinn(var_normal, var_view, light_direction, vertex_color, light_color, shininess);
 
     var_view = normalize(-camera_position.xyz);
     var_normal = normalize(normal_matrix * vertex_normal);

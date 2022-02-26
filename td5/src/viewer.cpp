@@ -20,7 +20,7 @@ void Viewer::init(int w, int h)
 
     loadShaders();
 
-    if (!_mesh.load(DATA_DIR "/models/sphere.obj"))
+    if (!_mesh.load(DATA_DIR "/models/lemming.off"))
         exit(1);
 
     _mesh.initVBA();

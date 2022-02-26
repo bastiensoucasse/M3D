@@ -28,8 +28,8 @@ vec3 blinn(vec3 normal, vec3 view_direction, vec3 light_direction, vec3 fragment
 
 void main()
 {
-    // out_color = vec4(var_color, 1);
-
     float shininess = 50;
-    out_color = vec4(blinn(normalize(var_normal),normalize(var_view), light_direction, vec3(0, 0, var_normal.z), light_color, shininess), 1);
+
+    // out_color = vec4(var_color, 1);
+    out_color = vec4(blinn(normalize(var_normal),normalize(var_view), light_direction, var_color, light_color, shininess), 1);
 }

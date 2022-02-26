@@ -28,9 +28,9 @@ void Mesh::computeNormals()
         mVertices.at(i).normal.setZero();
 
     for (int i = 0; i < mFaces.size(); i++) {
-        Vertex A = mVertices.at(mFaces.at(i).x());
-        Vertex B = mVertices.at(mFaces.at(i).y());
-        Vertex C = mVertices.at(mFaces.at(i).z());
+        Vertex& A = mVertices.at(mFaces.at(i).x());
+        Vertex& B = mVertices.at(mFaces.at(i).y());
+        Vertex& C = mVertices.at(mFaces.at(i).z());
 
         Vector3f normal = (B.position - A.position).cross(C.position - A.position);
 
@@ -71,8 +71,6 @@ void Mesh::draw(const Shader& shd)
     glBindVertexArray(mVertexArrayId);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBufferId);
-
-    computeNormals();
 
     int vertex_position = shd.getAttribLocation("vertex_position");
     if (vertex_position >= 0) {
@@ -152,6 +150,7 @@ bool Mesh::loadOFF(const std::string& filename)
 
     in.close();
 
+    computeNormals();
     return true;
 }
 
@@ -191,5 +190,6 @@ bool Mesh::loadOBJ(const std::string& filename)
         }
     }
 
+    computeNormals();
     return true;
 }
