@@ -1,5 +1,6 @@
 #include "mesh.h"
 
+#include <Eigen/Geometry>
 #include <ObjFormat/ObjFormat.h>
 #include <fstream>
 #include <iostream>
@@ -23,10 +24,23 @@ bool Mesh::load(const std::string& filename)
 
 void Mesh::computeNormals()
 {
-    // TODO
-    // pass 1: set the normal to 0
-    // pass 2: compute face normals and accumulate
-    // pass 3: normalize
+    for (int i = 0; i < mVertices.size(); i++)
+        mVertices.at(i).normal.setZero();
+
+    for (int i = 0; i < mFaces.size(); i++) {
+        Vertex A = mVertices.at(mFaces.at(i).x());
+        Vertex B = mVertices.at(mFaces.at(i).y());
+        Vertex C = mVertices.at(mFaces.at(i).z());
+
+        Vector3f normal = (B.position - A.position).cross(C.position - A.position);
+
+        A.normal += normal;
+        B.normal += normal;
+        C.normal += normal;
+    }
+
+    for (int i = 0; i < mVertices.size(); i++)
+        mVertices.at(i).normal.normalize();
 }
 
 void Mesh::initVBA()
@@ -57,6 +71,8 @@ void Mesh::draw(const Shader& shd)
     glBindVertexArray(mVertexArrayId);
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBufferId);
+
+    computeNormals();
 
     int vertex_position = shd.getAttribLocation("vertex_position");
     if (vertex_position >= 0) {

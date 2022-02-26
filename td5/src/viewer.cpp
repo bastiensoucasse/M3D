@@ -20,7 +20,7 @@ void Viewer::init(int w, int h)
 
     loadShaders();
 
-    if (!_mesh.load(DATA_DIR "/models/monkey2.obj"))
+    if (!_mesh.load(DATA_DIR "/models/sphere.obj"))
         exit(1);
 
     _mesh.initVBA();
@@ -62,7 +62,7 @@ void Viewer::drawScene()
     Matrix3f normal_matrix = local_to_camera_matrix.inverse().transpose();
     glUniformMatrix3fv(_shader.getUniformLocation("normal_matrix"), 1, GL_FALSE, normal_matrix.data());
 
-    Vector3f light_direction = (local_to_camera_matrix * Vector3f(1, 0, 1)).normalized();
+    Vector3f light_direction = (local_to_camera_matrix * Vector3f(1, 0, 1).normalized()).normalized();
     glUniform3fv(_shader.getUniformLocation("light_direction"), 1, light_direction.data());
 
     Vector3f light_color = Vector3f(1, 1, 1);
