@@ -51,6 +51,6 @@ Après recherches, il s'avère qu'en récupérant les sommets avec `Vertex verte
 
 Pour y voir plus clair, voici la version zoomée. ![Lemmin Normales Zoomé](renderings/lemming-normals-zoomed.png)
 
-N.B. : Il n'a pas été évident de savoir vraiment où ajouter l'appel à `computeNormal()`. En réfléchissant, le meilleur moment serait après chargement du fichier étant donné que les normales ne changent pas l'objet n'évoluant pas. Cependant, dans le cas d'un fichier _off_ tel que `sphere.off` les normales calculées semblent moins précisent que celles utilisées de base. ![Sphere Normales Cassées](renderings/sphere-normals-broken.png)
+N.B. : Il n'a pas été évident de savoir vraiment où ajouter l'appel à `computeNormal()`. En réfléchissant, le meilleur moment serait après chargement du fichier étant donné que les normales ne changent pas l'objet n'évoluant pas. Cependant, dans le cas d'un fichier _obj_ tel que `sphere.obj` les normales calculées semblent moins précisent que celles utilisées de base. ![Sphere Normales Cassées](renderings/sphere-normals-broken.png)
 
-On en déduit qu'un objet de type _off_ a ses normales précalculées. On ne le modifie pas dans ce cas là.
+On en déduit qu'un objet de type _obj_ a ses normales précalculées. On ne le modifie pas dans ce cas là.
