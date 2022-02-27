@@ -31,5 +31,5 @@ void main()
     float shininess = 50;
 
     // out_color = vec4(var_color, 1);
-    out_color = vec4(blinn(normalize(var_normal),normalize(var_view), light_direction, var_color, light_color, shininess), 1);
+    out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), var_color, light_color, shininess), 1);
 }

@@ -151,6 +151,7 @@ bool Mesh::loadOFF(const std::string& filename)
     in.close();
 
     computeNormals();
+
     return true;
 }
 
@@ -190,6 +191,8 @@ bool Mesh::loadOBJ(const std::string& filename)
         }
     }
 
-    computeNormals();
+    if (pObjMesh->normals.empty())
+        computeNormals();
+
     return true;
 }
