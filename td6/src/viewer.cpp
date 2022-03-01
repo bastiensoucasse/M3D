@@ -74,15 +74,15 @@ void Viewer::drawScene()
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _texID0);
-    glUniform1i(_shader.getUniformLocation("tex_day"), 0);
+    glUniform1i(_shader.getUniformLocation("sampler0"), 0);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _texID1);
-    glUniform1i(_shader.getUniformLocation("tex_clouds"), 1);
+    glUniform1i(_shader.getUniformLocation("sampler1"), 1);
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, _texID2);
-    glUniform1i(_shader.getUniformLocation("tex_night"), 2);
+    glUniform1i(_shader.getUniformLocation("sampler2"), 2);
 
     _mesh.draw(_shader);
 
