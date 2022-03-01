@@ -1,226 +1,207 @@
-
 #include "mesh.h"
-#include "shader.h"
+
 #include <Eigen/Geometry>
-#include <iostream>
+#include <ObjFormat/ObjFormat.h>
 #include <fstream>
+#include <iostream>
 #include <limits>
+
+#include "shader.h"
 
 using namespace Eigen;
 
 bool Mesh::load(const std::string& filename)
 {
-  std::string ext = filename.substr(filename.size()-3,3);
-  if(ext=="off" || ext=="OFF")
-    return loadOFF(filename);
-  else if(ext=="obj" || ext=="OBJ")
-    return loadOBJ(filename);
+    std::string ext = filename.substr(filename.size() - 3, 3);
+    if (ext == "off" || ext == "OFF")
+        return loadOFF(filename);
+    else if (ext == "obj" || ext == "OBJ")
+        return loadOBJ(filename);
 
-  std::cerr << "Mesh: extension \'" << ext << "\' not supported." << std::endl;
-  return false;
+    std::cerr << "Mesh: extension \'" << ext << "\' not supported." << std::endl;
+    return false;
 }
 
 void Mesh::computeNormals()
 {
-  // pass 1: set the normal to 0
+    for (int i = 0; i < mVertices.size(); i++)
+        mVertices.at(i).normal.setZero();
 
-  // pass 2: compute face normals and accumulate
+    for (int i = 0; i < mFaces.size(); i++) {
+        Vertex& A = mVertices.at(mFaces.at(i).x());
+        Vertex& B = mVertices.at(mFaces.at(i).y());
+        Vertex& C = mVertices.at(mFaces.at(i).z());
 
-  // pass 3: normalize
+        Vector3f normal = (B.position - A.position).cross(C.position - A.position);
+
+        A.normal += normal;
+        B.normal += normal;
+        C.normal += normal;
+    }
+
+    for (int i = 0; i < mVertices.size(); i++)
+        mVertices.at(i).normal.normalize();
 }
 
 void Mesh::initVBA()
 {
-  // create the BufferObjects and copy the related data into them.
+    glGenBuffers(1, &mVertexBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, mVertexBufferId);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * mVertices.size(), mVertices[0].position.data(), GL_STATIC_DRAW);
 
-  // create a VBO identified by a unique index:
-  glGenBuffers(1,&mVertexBufferId);
-  // activate the VBO:
-  glBindBuffer(GL_ARRAY_BUFFER, mVertexBufferId);
-  // copy the data from host's RAM to GPU's video memory:
-  glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex)*mVertices.size(), mVertices[0].position.data(), GL_STATIC_DRAW);
-  
-  glGenBuffers(1,&mIndexBufferId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBufferId);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Vector3i)*mFaces.size(), mFaces[0].data(), GL_STATIC_DRAW);
-  
-  glGenVertexArrays(1,&mVertexArrayId);
-  
-  mIsInitialized = true;
+    glGenBuffers(1, &mIndexBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Vector3i) * mFaces.size(), mFaces[0].data(), GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &mVertexArrayId);
+
+    mIsInitialized = true;
 }
 
 Mesh::~Mesh()
 {
-  if(mIsInitialized)
-  {
-    glDeleteBuffers(1,&mVertexBufferId);
-    glDeleteBuffers(1,&mIndexBufferId);
-  }
+    if (mIsInitialized) {
+        glDeleteBuffers(1, &mVertexBufferId);
+        glDeleteBuffers(1, &mIndexBufferId);
+    }
 }
 
-
-void Mesh::draw(const Shader &shd)
+void Mesh::draw(const Shader& shd)
 {
-  // Activate the VBO of the current mesh:
-  glBindVertexArray(mVertexArrayId);
-  glBindBuffer(GL_ARRAY_BUFFER, mVertexBufferId);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBufferId);
-  
-  // Specify vertex data
+    glBindVertexArray(mVertexArrayId);
+    glBindBuffer(GL_ARRAY_BUFFER, mVertexBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBufferId);
 
-  // 1 - get id of the attribute "vtx_position" as declared as "in vec3 vtx_position" in the vertex shader
-  int vertex_loc = shd.getAttribLocation("vtx_position");
-  // 2 - tells OpenGL where to find the x, y, and z coefficients:
-  glVertexAttribPointer(vertex_loc,     // id of the attribute
-                        3,              // number of coefficients (here 3 for x, y, z)
-                        GL_FLOAT,       // type of the coefficients (here float)
-                        GL_FALSE,       // for fixed-point number types only
-                        sizeof(Vertex), // number of bytes between the x coefficient of two vertices
-                                        // (e.g. number of bytes between x_0 and x_1)
-                        0);             // number of bytes to get x_0
-  // 3 - activate this stream of vertex attribute
-  glEnableVertexAttribArray(vertex_loc);
-  
-  int normal_loc = shd.getAttribLocation("vtx_normal");
-  if(normal_loc>=0)
-  {
-    glVertexAttribPointer(normal_loc, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(Vector3f));
-    glEnableVertexAttribArray(normal_loc);
-  }
+    int vertex_position = shd.getAttribLocation("vertex_position");
+    if (vertex_position >= 0) {
+        glVertexAttribPointer(vertex_position, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+        glEnableVertexAttribArray(vertex_position);
+    }
 
-  int color_loc = shd.getAttribLocation("vtx_color");
-  if(color_loc>=0)
-  {
-    glVertexAttribPointer(color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2*sizeof(Vector3f)));
-    glEnableVertexAttribArray(color_loc);
-  }
+    int vertex_normal = shd.getAttribLocation("vertex_normal");
+    if (vertex_normal >= 0) {
+        glVertexAttribPointer(vertex_normal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vector3f)));
+        glEnableVertexAttribArray(vertex_normal);
+    }
 
-  // send the geometry
-  glDrawElements(GL_TRIANGLES, 3*mFaces.size(), GL_UNSIGNED_INT, 0);
+    int vertex_color = shd.getAttribLocation("vertex_color");
+    if (vertex_color >= 0) {
+        glVertexAttribPointer(vertex_color, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2 * sizeof(Vector3f)));
+        glEnableVertexAttribArray(vertex_color);
+    }
 
-  // at this point the mesh has been drawn and raserized into the framebuffer!
-  glDisableVertexAttribArray(vertex_loc);
-  
-  if(normal_loc>=0) glDisableVertexAttribArray(normal_loc);
-  if(color_loc>=0)  glDisableVertexAttribArray(color_loc);
+    int vertex_texcoords = shd.getAttribLocation("vertex_texcoords");
+    if (vertex_texcoords >= 0) {
+        glVertexAttribPointer(vertex_texcoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2 * sizeof(Vector3f) + sizeof(Vector4f)));
+        glEnableVertexAttribArray(vertex_texcoords);
+    }
 
-  checkError();
+    glDrawElements(GL_TRIANGLES, 3 * mFaces.size(), GL_UNSIGNED_INT, 0);
+
+    if (vertex_position >= 0)
+        glDisableVertexAttribArray(vertex_position);
+
+    if (vertex_normal >= 0)
+        glDisableVertexAttribArray(vertex_normal);
+
+    if (vertex_color >= 0)
+        glDisableVertexAttribArray(vertex_color);
+
+    if (vertex_texcoords >= 0)
+        glDisableVertexAttribArray(vertex_texcoords);
+
+    checkError();
 }
-
-
-
-
-//********************************************************************************
-// Loaders...
-//********************************************************************************
-
 
 bool Mesh::loadOFF(const std::string& filename)
 {
-  std::ifstream in(filename.c_str(),std::ios::in);
-  if(!in)
-  {
-    std::cerr << "File not found " << filename << std::endl;
-    return false;
-  }
-
-  std::string header;
-  in >> header;
-
-  bool hasColor = false;
-
-  // check the header file
-  if(header != "OFF")
-  {
-    if(header != "COFF")
-    {
-      std::cerr << "Wrong header = " << header << std::endl;
-      return false;
+    std::ifstream in(filename.c_str(), std::ios::in);
+    if (!in) {
+        std::cerr << "File not found " << filename << std::endl;
+        return false;
     }
-    hasColor = true;
-  }
 
-  int nofVertices, nofFaces, inull;
-  int nb, id0, id1, id2;
-  Vector3f v;
+    std::string header;
+    in >> header;
 
-  in >> nofVertices >> nofFaces >> inull;
+    bool hasColor = false;
 
-  for(int i=0 ; i<nofVertices ; ++i)
-  {
-    in >> v[0] >> v[1] >> v[2];
-    mVertices.push_back(Vertex(v));
-
-    if(hasColor) {
-      Vector4f c;
-      in >> c[0] >> c[1] >> c[2] >> c[3];
-      mVertices[i].color = c/255.;
+    if (header != "OFF") {
+        if (header != "COFF") {
+            std::cerr << "Wrong header = " << header << std::endl;
+            return false;
+        }
+        hasColor = true;
     }
-  }
 
-  for(int i=0 ; i<nofFaces ; ++i)
-  {
-    in >> nb >> id0 >> id1 >> id2;
-    assert(nb==3);
-    mFaces.push_back(Vector3i(id0, id1, id2));
-  }
+    int nofVertices, nofFaces, inull;
+    int nb, id0, id1, id2;
+    Vector3f v;
 
-  in.close();
+    in >> nofVertices >> nofFaces >> inull;
 
-  computeNormals();
+    for (int i = 0; i < nofVertices; ++i) {
+        in >> v[0] >> v[1] >> v[2];
+        mVertices.push_back(Vertex(v));
 
-  return true;
+        if (hasColor) {
+            Vector4f c;
+            in >> c[0] >> c[1] >> c[2] >> c[3];
+            mVertices[i].color = c / 255.;
+        }
+    }
+
+    for (int i = 0; i < nofFaces; ++i) {
+        in >> nb >> id0 >> id1 >> id2;
+        assert(nb == 3);
+        mFaces.push_back(Vector3i(id0, id1, id2));
+    }
+
+    in.close();
+
+    computeNormals();
+
+    return true;
 }
-
-
-
-#include <ObjFormat/ObjFormat.h>
 
 bool Mesh::loadOBJ(const std::string& filename)
 {
-  ObjMesh* pRawObjMesh = ObjMesh::LoadFromFile(filename);
+    ObjMesh* pRawObjMesh = ObjMesh::LoadFromFile(filename);
 
-  if (!pRawObjMesh)
-  {
-      std::cerr << "Mesh::loadObj: error loading file " << filename << "." << std::endl;
-      return false;
-  }
-
-  // Makes sure we have an indexed face set
-  ObjMesh* pObjMesh = pRawObjMesh->createIndexedFaceSet(Obj::Options(Obj::AllAttribs|Obj::Triangulate));
-  delete pRawObjMesh;
-  pRawObjMesh = 0;
-
-  // copy vertices
-  mVertices.resize(pObjMesh->positions.size());
-
-  for (std::size_t i=0 ; i<pObjMesh->positions.size() ; ++i)
-  {
-    mVertices[i] = Vertex(Vector3f(pObjMesh->positions[i].x, pObjMesh->positions[i].y, pObjMesh->positions[i].z));
-
-    if(!pObjMesh->texcoords.empty())
-      mVertices[i].texcoord = Vector2f(pObjMesh->texcoords[i]);
-
-    if(!pObjMesh->normals.empty())
-      mVertices[i].normal = Vector3f(pObjMesh->normals[i]);
-  }
-
-  // copy faces
-  for (std::size_t smi=0 ; smi<pObjMesh->getNofSubMeshes() ; ++smi)
-  {
-    const ObjSubMesh* pSrcSubMesh = pObjMesh->getSubMesh(smi);
-
-    mFaces.reserve(pSrcSubMesh->getNofFaces());
-
-    for (std::size_t fid = 0 ; fid<pSrcSubMesh->getNofFaces() ; ++fid)
-    {
-      ObjConstFaceHandle srcFace = pSrcSubMesh->getFace(fid);
-      mFaces.push_back(Vector3i(srcFace.vPositionId(0), srcFace.vPositionId(1), srcFace.vPositionId(2)));
+    if (!pRawObjMesh) {
+        std::cerr << "Mesh::loadObj: error loading file " << filename << "." << std::endl;
+        return false;
     }
-  }
 
-  if(pObjMesh->normals.empty())
-    computeNormals();
-  
-  return true;
+    ObjMesh* pObjMesh = pRawObjMesh->createIndexedFaceSet(Obj::Options(Obj::AllAttribs | Obj::Triangulate));
+    delete pRawObjMesh;
+    pRawObjMesh = 0;
+
+    mVertices.resize(pObjMesh->positions.size());
+
+    for (std::size_t i = 0; i < pObjMesh->positions.size(); ++i) {
+        mVertices[i] = Vertex(Vector3f(pObjMesh->positions[i].x, pObjMesh->positions[i].y, pObjMesh->positions[i].z));
+
+        if (!pObjMesh->texcoords.empty())
+            mVertices[i].texcoord = Vector2f(pObjMesh->texcoords[i]);
+
+        if (!pObjMesh->normals.empty())
+            mVertices[i].normal = Vector3f(pObjMesh->normals[i]);
+    }
+
+    for (std::size_t smi = 0; smi < pObjMesh->getNofSubMeshes(); ++smi) {
+        const ObjSubMesh* pSrcSubMesh = pObjMesh->getSubMesh(int(smi));
+
+        mFaces.reserve(pSrcSubMesh->getNofFaces());
+
+        for (std::size_t fid = 0; fid < pSrcSubMesh->getNofFaces(); ++fid) {
+            ObjConstFaceHandle srcFace = pSrcSubMesh->getFace(int(fid));
+            mFaces.push_back(Vector3i(srcFace.vPositionId(0), srcFace.vPositionId(1), srcFace.vPositionId(2)));
+        }
+    }
+
+    if (pObjMesh->normals.empty())
+        computeNormals();
+
+    return true;
 }

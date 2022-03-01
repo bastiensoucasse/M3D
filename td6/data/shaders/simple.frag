@@ -1,29 +1,35 @@
-#version 330 core
+#version 410 core
 
-in vec3 v_color;
-in vec3 v_normal;
-in vec3 v_view;
-
-uniform vec3 lightDir;
+in vec3 var_normal;
+in vec3 var_view;
+in vec3 var_color;
+in vec2 var_texcoords;
 
 out vec4 out_color;
 
-vec3 blinn(vec3 n, vec3 v, vec3 l, vec3 dCol, vec3 sCol, float s)
+uniform vec3 light_direction;
+uniform vec3 light_color;
+uniform sampler2D tex_day;
+uniform sampler2D tex_clouds;
+uniform sampler2D tex_night;
+
+vec3 blinn(vec3 normal, vec3 view_direction, vec3 light_direction, vec3 fragment_color, vec3 light_color, float shininess)
 {
-  vec3 res = vec3(0,0,0);
-  float dc = max(0,dot(n,l));
-  if(dc>0) {
-    res = dCol * dc;
-    float sc = max(0,dot(n,normalize(v+l)));
-    if(sc>0)
-      res += sCol * pow(sc,s) * dc;
-  }
-  return res;
+    float ambient_term = 0.2;
+    vec3 ambient_color = fragment_color * ambient_term;
+
+    float diffuse_term = max(dot(normal, light_direction), 0);
+    vec3 diffuse_color = fragment_color * diffuse_term;
+
+    float specular_term = pow(max(dot(normal, normalize(view_direction + light_direction)), 0), shininess);
+    vec3 specular_color = light_color * specular_term;
+
+    return ambient_color + diffuse_color + specular_color;
 }
 
-void main(void) {
-  float ambient = 0.2;
-  float shininess = 50;
-  vec3 spec_color = vec3(1,1,1);
-  out_color = vec4(ambient * v_color + blinn(normalize(v_normal),normalize(v_view), lightDir, v_color, spec_color, shininess),1.0);
+void main()
+{
+    float shininess = 50;
+    // out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), var_color, light_color, shininess), 1);
+    out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), mix(texture(tex_day, var_texcoords), texture(tex_clouds, var_texcoords), texture(tex_clouds, var_texcoords).x).xyz, light_color, shininess), 1);
 }
