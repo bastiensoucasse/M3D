@@ -36,9 +36,13 @@ private:
     float _theta;
     bool _rotate;
 
-    GLuint _texID0;
-    GLuint _texID1;
-    GLuint _texID2;
+    GLuint _texId0, _texId1, _texId2;
+
+    GLuint _samplerId;
+    GLenum _minFilters[6] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR };
+    GLenum _magFilters[2] = { GL_NEAREST, GL_LINEAR };
+    int _minFilter = 0;
+    int _magFilter = 0;
 
     enum TrackMode {
         TM_NO_TRACK = 0,

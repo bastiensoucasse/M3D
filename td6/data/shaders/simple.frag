@@ -34,8 +34,11 @@ void main()
     // out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), var_color, light_color, shininess), 1);
 
     vec4 tex0 = texture(sampler0, var_texcoords);
-    vec4 tex1 = texture(sampler1, var_texcoords);
-    vec4 tex2 = texture(sampler2, var_texcoords);
-    vec4 mix1 = mix(tex2, mix(tex0, tex1, tex1.x), max(dot(normalize(var_normal), normalize(light_direction)), 0));
-    out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), mix1.xyz, light_color, shininess), 1);
+    // vec4 tex1 = texture(sampler1, var_texcoords);
+    // vec4 tex2 = texture(sampler2, var_texcoords);
+
+    // vec4 mix1 = mix(tex2, mix(tex0, tex1, tex1.x), max(dot(normalize(var_normal), normalize(light_direction)), 0));
+    // out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), mix1.xyz, light_color, shininess), 1);
+
+    out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), tex0.xyz, light_color, shininess), 1);
 }
