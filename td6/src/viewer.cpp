@@ -114,6 +114,8 @@ void Viewer::drawScene()
     // glUniform1i(_shader.getUniformLocation("sampler2"), 2);
 
     glBindSampler(0, _samplerId);
+    // glSamplerParameteri(_samplerId, GL_TEXTURE_MIN_FILTER, _minFilter);
+    // glSamplerParameteri(_samplerId, GL_TEXTURE_MAG_FILTER, _magFilter);
     glSamplerParameteri(_samplerId, GL_TEXTURE_MIN_FILTER, GLint(_minFilters[_minFilter]));
     glSamplerParameteri(_samplerId, GL_TEXTURE_MAG_FILTER, GLint(_magFilters[_magFilter]));
 

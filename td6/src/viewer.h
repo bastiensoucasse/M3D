@@ -38,6 +38,10 @@ private:
 
     GLuint _texId0, _texId1, _texId2;
 
+    // GLuint _samplerId;
+    // GLenum _minFilter = GL_NEAREST;
+    // GLenum _magFilter = GL_NEAREST;
+
     GLuint _samplerId;
     GLenum _minFilters[6] = { GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR };
     GLenum _magFilters[2] = { GL_NEAREST, GL_LINEAR };
