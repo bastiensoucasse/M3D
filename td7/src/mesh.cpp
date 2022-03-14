@@ -13,9 +13,11 @@ using namespace Eigen;
 bool Mesh::load(const std::string& filename)
 {
     std::string ext = filename.substr(filename.size() - 3, 3);
+
     if (ext == "off" || ext == "OFF")
         return loadOFF(filename);
-    else if (ext == "obj" || ext == "OBJ")
+
+    if (ext == "obj" || ext == "OBJ")
         return loadOBJ(filename);
 
     std::cerr << "Mesh: extension \'" << ext << "\' not supported." << std::endl;
@@ -24,23 +26,48 @@ bool Mesh::load(const std::string& filename)
 
 void Mesh::computeNormals()
 {
-    for (int i = 0; i < mVertices.size(); i++)
-        mVertices.at(i).normal.setZero();
+    for (size_t i = 0; i < mVertices.size(); i++) {
+        Vertex& v = mVertices.at(i);
 
-    for (int i = 0; i < mFaces.size(); i++) {
-        Vertex& A = mVertices.at(mFaces.at(i).x());
-        Vertex& B = mVertices.at(mFaces.at(i).y());
-        Vertex& C = mVertices.at(mFaces.at(i).z());
-
-        Vector3f normal = (B.position - A.position).cross(C.position - A.position);
-
-        A.normal += normal;
-        B.normal += normal;
-        C.normal += normal;
+        v.normal.setZero();
+        v.tangent.setZero();
+        v.bitangent.setZero();
     }
 
-    for (int i = 0; i < mVertices.size(); i++)
-        mVertices.at(i).normal.normalize();
+    for (size_t i = 0; i < mFaces.size(); i++) {
+        Vertex& a = mVertices.at(mFaces.at(i).x());
+        Vertex& b = mVertices.at(mFaces.at(i).y());
+        Vertex& c = mVertices.at(mFaces.at(i).z());
+
+        const Vector3f q1 = b.position - a.position;
+        const Vector3f q2 = c.position - a.position;
+
+        const Vector3f normal = q1.cross(q2);
+
+        const Vector2f st1 = b.texcoord - a.texcoord;
+        const Vector2f st2 = c.texcoord - a.texcoord;
+
+        const Vector3f tangent = Vector3f(st2.y() * q1.x() - st1.y() * q2.x(), st2.y() * q1.y() - st1.y() * q2.y(), st2.y() * q1.z() - st1.y() * q2.z()) / (st1.x() * st2.y() - st2.x() * st1.y());
+        const Vector3f bitangent = Vector3f(st1.x() * q2.x() - st2.x() * q1.x(), st1.x() * q2.y() - st2.x() * q1.y(), st1.x() * q2.z() - st2.x() * q1.z()) / (st1.x() * st2.y() - st2.x() * st1.y());
+
+        a.normal += normal, a.tangent += tangent, a.bitangent += bitangent;
+        b.normal += normal, b.tangent += tangent, b.bitangent += bitangent;
+        c.normal += normal, c.tangent += tangent, c.bitangent += bitangent;
+    }
+
+    for (size_t i = 0; i < mVertices.size(); i++) {
+        Vertex& v = mVertices.at(i);
+
+        v.normal.normalize();
+        v.tangent.normalize();
+        v.bitangent.normalize();
+
+        v.tangent = v.tangent - v.normal.dot(v.tangent) * v.normal;
+        v.bitangent = v.bitangent - v.normal.dot(v.bitangent) * v.normal - v.tangent.dot(v.bitangent) * v.tangent / v.tangent.norm();
+
+        v.tangent.normalize();
+        v.bitangent.normalize();
+    }
 }
 
 void Mesh::initVBA()
@@ -72,43 +99,62 @@ void Mesh::draw(const Shader& shd)
     glBindBuffer(GL_ARRAY_BUFFER, mVertexBufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndexBufferId);
 
-    int vertex_position = shd.getAttribLocation("vertex_position");
-    if (vertex_position >= 0) {
-        glVertexAttribPointer(vertex_position, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-        glEnableVertexAttribArray(vertex_position);
+    // For vec3 vert_position.
+    int vert_position = shd.getAttribLocation("vert_position");
+    if (vert_position >= 0) {
+        glVertexAttribPointer(vert_position, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+        glEnableVertexAttribArray(vert_position);
     }
 
-    int vertex_normal = shd.getAttribLocation("vertex_normal");
-    if (vertex_normal >= 0) {
-        glVertexAttribPointer(vertex_normal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vector3f)));
-        glEnableVertexAttribArray(vertex_normal);
+    // For vec3 vert_normal.
+    int vert_normal = shd.getAttribLocation("vert_normal");
+    if (vert_normal >= 0) {
+        glVertexAttribPointer(vert_normal, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(sizeof(Vector3f)));
+        glEnableVertexAttribArray(vert_normal);
     }
 
-    int vertex_color = shd.getAttribLocation("vertex_color");
-    if (vertex_color >= 0) {
-        glVertexAttribPointer(vertex_color, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2 * sizeof(Vector3f)));
-        glEnableVertexAttribArray(vertex_color);
+    // For vec3 vert_tangent.
+    int vert_tangent = shd.getAttribLocation("vert_tangent");
+    if (vert_tangent >= 0) {
+        glVertexAttribPointer(vert_tangent, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2 * sizeof(Vector3f)));
+        glEnableVertexAttribArray(vert_tangent);
     }
 
-    int vertex_texcoords = shd.getAttribLocation("vertex_texcoords");
-    if (vertex_texcoords >= 0) {
-        glVertexAttribPointer(vertex_texcoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(2 * sizeof(Vector3f) + sizeof(Vector4f)));
-        glEnableVertexAttribArray(vertex_texcoords);
+    // For vec3 vert_bitangent.
+    int vert_bitangent = shd.getAttribLocation("vert_bitangent");
+    if (vert_bitangent >= 0) {
+        glVertexAttribPointer(vert_bitangent, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(Vector3f)));
+        glEnableVertexAttribArray(vert_bitangent);
+    }
+
+    // For vec4 vert_color.
+    int vert_color = shd.getAttribLocation("vert_color");
+    if (vert_color >= 0) {
+        glVertexAttribPointer(vert_color, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4 * sizeof(Vector3f)));
+        glEnableVertexAttribArray(vert_color);
+    }
+
+    // For vec2 vert_texcoords.
+    int vert_texcoords = shd.getAttribLocation("vert_texcoords");
+    if (vert_texcoords >= 0) {
+        glVertexAttribPointer(vert_texcoords, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4 * sizeof(Vector3f) + sizeof(Vector4f)));
+        glEnableVertexAttribArray(vert_texcoords);
     }
 
     glDrawElements(GL_TRIANGLES, 3 * mFaces.size(), GL_UNSIGNED_INT, 0);
 
-    if (vertex_position >= 0)
-        glDisableVertexAttribArray(vertex_position);
-
-    if (vertex_normal >= 0)
-        glDisableVertexAttribArray(vertex_normal);
-
-    if (vertex_color >= 0)
-        glDisableVertexAttribArray(vertex_color);
-
-    if (vertex_texcoords >= 0)
-        glDisableVertexAttribArray(vertex_texcoords);
+    if (vert_position >= 0)
+        glDisableVertexAttribArray(vert_position);
+    if (vert_normal >= 0)
+        glDisableVertexAttribArray(vert_normal);
+    if (vert_tangent >= 0)
+        glDisableVertexAttribArray(vert_tangent);
+    if (vert_bitangent >= 0)
+        glDisableVertexAttribArray(vert_bitangent);
+    if (vert_color >= 0)
+        glDisableVertexAttribArray(vert_color);
+    if (vert_texcoords >= 0)
+        glDisableVertexAttribArray(vert_texcoords);
 
     checkError();
 }

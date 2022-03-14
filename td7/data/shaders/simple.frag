@@ -1,51 +1,56 @@
 #version 410 core
 
-in vec3 var_normal;
-in vec3 var_view;
-in vec3 var_color;
-in vec2 var_texcoords;
+in vec3 frag_view;
+in vec3 frag_tangent;
+in vec3 frag_bitangent;
+in vec3 frag_normal;
+in vec4 frag_color;
+in vec2 frag_texcoords;
 
 out vec4 out_color;
 
 uniform vec3 light_direction;
-uniform vec3 light_color;
 uniform sampler2D sampler0;
 uniform sampler2D sampler1;
-uniform sampler2D sampler2;
 
-vec3 blinn(vec3 normal, vec3 view_direction, vec3 light_direction, vec3 fragment_color, vec3 light_color, float shininess)
+vec4 blinn(vec3 n, vec3 v, vec3 l, vec4 dc, vec4 sc, float s)
 {
-    float ambient_term = 0.2;
-    vec3 ambient_color = fragment_color * ambient_term;
+    // Ambient
+    float at = 0.2;
+    vec4 ac = at * dc;
 
-    float diffuse_term = max(dot(normal, light_direction), 0);
-    vec3 diffuse_color = fragment_color * diffuse_term;
+    // Diffuse
+    float dt = max(dot(n, l), 0);
+    dc = dt * dc;
 
-    float specular_term = pow(max(dot(normal, normalize(view_direction + light_direction)), 0), shininess);
-    vec3 specular_color = light_color * specular_term;
+    // Specular
+    float st = pow(max(dot(n, normalize(v + l)), 0), s);
+    sc = st * sc;
 
-    return ambient_color + diffuse_color /* + specular_color */;
+    return ac + dc + sc;
 }
 
 void main()
 {
-    float shininess = 50;
-    
-    // out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), var_color, light_color, shininess), 1);
+    vec4 diffuse_texture = texture(sampler0, frag_texcoords);
+    vec4 normals_texture = texture(sampler1, frag_texcoords);
 
-    vec4 tex0 = texture(sampler0, var_texcoords);
-    vec4 tex1 = texture(sampler1, var_texcoords);
-    vec4 tex2 = texture(sampler2, var_texcoords);
-    vec4 texmix = mix(tex0, tex1, tex1.x);
-    texmix = mix(tex2, texmix, max(dot(normalize(var_normal), normalize(light_direction)), 0));
+    vec3 t = normalize(frag_tangent);
+    vec3 b = normalize(frag_bitangent);
+    vec3 n = normalize(frag_normal);
+    mat3 tbn = mat3(t, b, n);
 
-    // out_color = tex0;
-    // out_color = tex1;
-    // out_color = tex2;
+    // Activity version
+    // vec3 normal = normalize(normals_texture.rgb * 2 - 1);
+    // vec3 view = normalize(tbn * frag_view);
+    // vec3 light = normalize(tbn * light_direction);
 
-    // out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), tex0.xyz, light_color, shininess), 1);
-    // out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), tex1.xyz, light_color, shininess), 1);
-    // out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), tex2.xyz, light_color, shininess), 1);
+    // Lesson version
+    vec3 normal = normalize(tbn * (normals_texture.rgb * 2 - 1));
+    vec3 view = normalize(frag_view);
+    vec3 light = normalize(light_direction);
 
-    out_color = vec4(blinn(normalize(var_normal), normalize(var_view), normalize(light_direction), texmix.xyz, light_color, shininess), 1);
+    vec4 sc = vec4(1, 1, 1, 1);
+    float s = 50;
+    out_color = blinn(normal, view, light, diffuse_texture, sc, s);
 }
