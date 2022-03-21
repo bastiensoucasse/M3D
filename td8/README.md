@@ -4,7 +4,7 @@ Bastien Soucasse – M3D
 
 ## 1. Grille régulière
 
-Pour la séance de TP, on utilise directement la maillage `grid.obj`.
+Pour la séance de TP, on utilise directement le maillage `grid.obj`. En écrivant la méthode `Mesh::createMesh()`, la grille est bien crée aux bonnes dimensions cependant la texture n'est pas appliquée et tout le travail suivant n'est pas visible. Je reste donc sur le maillage `grid.obj`.
 
 ![renderings/default.png](renderings/default.png)
 
@@ -20,7 +20,7 @@ En appliquant cette formule, le rendu n'est pas le cylindre attendu, mais plutô
 
 ![renderings/error-uv-remapping.png](renderings/error-uv-remapping.png)
 
-Effectivement, il y avait une erreur de _remapping_ de `u` et `v` : \[…\].
+Effectivement, il y avait une erreur de _remapping_ de `u` et `v`.
 
 Après modification, on peut visualiser à nouveau une forme étrange mais qui se rapproche.
 
@@ -79,7 +79,7 @@ En testant avec le troisième ensemble de points, on retrouve un trou dans la fo
 
 ![renderings/bezier-3b.png](renderings/bezier-3b.png)
 
-La torsion fût un problème à implémenter. En effet, il fût impossible de comprendre comment réaliser cet ajout en se basant sur l'énoncé et le cours.
+La torsion fût un problème à implémenter. J'ai décidé de l'implémenter plus tard.
 
 J'ai donc commencé par implémenter le calcul des normales en faisant la position du point à la surface moins celle du point sur la courbe pour avec le vecteur que l'on peut ensuite normaliser.
 
@@ -88,3 +88,17 @@ J'ai donc commencé par implémenter le calcul des normales en faisant la positi
 Ensuite, la section carrée a été appliquée pour la visualisation de la torsion à appliquer par la suite, en normalisant le cercle par sa norme infinie.
 
 ![renderings/bezier-5.png](renderings/bezier-5.png)
+
+Finalement, après courte discussion avec vous-même (si vous êtes bien M. Guennebaud), il a été déterminé qu'il fallait appliquer une matrice de rotation d'un angle dépendant de `u`. Le contrôle au clavier du coefficient de torsion a été également implémenté comme dans les TD précédents.
+
+- Coefficient de torsion de 0 :
+
+    ![renderings/bezier-6a.png](renderings/bezier-6a.png)
+
+- Coefficient de torsion de 1 :
+
+    ![renderings/bezier-6b.png](renderings/bezier-6b.png)
+
+- Coefficient de torsion de 2 :
+
+    ![renderings/bezier-6c.png](renderings/bezier-6c.png)

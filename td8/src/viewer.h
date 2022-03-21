@@ -40,6 +40,7 @@ private:
 
     float _theta;
     bool _rotate;
+    float _r_coef;
 
 
     // Mouse parameters for the trackball

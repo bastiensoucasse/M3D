@@ -10,6 +10,7 @@ uniform mat4 obj_mat;
 uniform mat4 proj_mat;
 uniform mat4 view_mat;
 uniform mat3 normal_mat;
+uniform float r_coef;
 
 in vec3 vtx_position;
 in vec3 vtx_normal;
@@ -111,12 +112,16 @@ vec3 cylBezierYZ(float u, float v, vec3 B[4], float r, out vec3 n)
     F[1] = cross(F[2], F[0]);
 
     vec3 c = vec3(cos(v), sin(v), 0);
-    float cn = max(abs(c.x), max(abs(c.y), abs(c.z)));
+    float cn = abs(c.x) + abs(c.y);
     c /= cn;
 
-    vec3 p = q + F * (r * c);
+    float theta = r_coef * u * 2 * M_PI;
+    mat3 r_mat = mat3(vec3(cos(theta), -sin(theta), 0),
+                      vec3(sin(theta), cos(theta), 0),
+                      vec3(0, 0, 1));
+    vec3 p = q + F * (r_mat * (r * c));
 
-    n = normalize(p - q);
+    n = normalize(normal_mat * (p - q));
     return p;
 }
 
@@ -128,23 +133,29 @@ vec3 cylBezier(float u, float v, vec3 B[4], float r, out vec3 n)
     vec3 q = bezier(u, B, F);
 
     vec3 c = vec3(cos(v), sin(v), 0);
-    float cn = max(abs(c.x), max(abs(c.y), abs(c.z)));
+    float cn = abs(c.x) + abs(c.y);
     c /= cn;
 
-    vec3 p = q + F * (r * c);
+    float theta = r_coef * u * 2 * M_PI;
+    mat3 r_mat = mat3(vec3(cos(theta), -sin(theta), 0),
+                      vec3(sin(theta), cos(theta), 0),
+                      vec3(0, 0, 1));
+    vec3 p = q + F * (r_mat * (r * c));
 
-    n = normalize(p - q);
+    n = normalize(normal_mat * (p - q));
     return p;
-}
+}   
 
 void main()
 {
     v_uv = vtx_texcoord;
-    // v_normal = normalize(normal_mat * vtx_normal);
+    v_normal = normalize(normal_mat * vtx_normal);
 
     // vec3 p = cylinder(vtx_texcoord, vec3(0, 0, 0), vec3(1, 0, 1), 1);
 
-    vec3 B[4] = B_2;
+    vec3 B[4] = B_1;
     vec3 p = cylBezier(vtx_texcoord.x, vtx_texcoord.y, B, .2, v_normal);
+
+    // gl_Position = proj_mat * (view_mat * (obj_mat * vec4(vtx_position, 1)));
     gl_Position = proj_mat * (view_mat * (obj_mat * vec4(p, 1)));
 }
