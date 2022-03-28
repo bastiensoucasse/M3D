@@ -23,7 +23,7 @@ void Viewer::init(int w, int h){
     glClearColor(1.0, 1.0, 1.0, 0.0);
 
     loadShaders();
-    if(!_mesh.load(DATA_DIR"/models/icosa.obj")) exit(1);
+    if(!_mesh.load(DATA_DIR"/models/pipes.obj")) exit(1);
     _mesh.init();
 
     reshape(w,h);
