@@ -221,7 +221,7 @@ void Viewer::updateAndDrawScene()
         Vector3f axes[3][2];
         Affine3f transform_matrix = Affine3f::Identity();
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < n; i++) {
             P[i] = transform_matrix.translation();
 
             transform_matrix *= AngleAxisf(phi[i], Vector3f::UnitZ());
