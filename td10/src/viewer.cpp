@@ -58,10 +58,8 @@ void Viewer::init(int w, int h)
     _lengths.resize(nbSegments);
     _lengths << 1.7f, 1.5f, 1.2f;
     _jointAngles.resize(2, nbSegments);
-    // _jointAngles << 45, 0, -30,
-    //     30, 20, -20;
-    _jointAngles << 0, 0, 0,
-        0, 0, 0;
+    _jointAngles << 45, 0, -30,
+        30, 20, -20;
     _jointAngles *= float(M_PI) / 180.f;
 
     glEnable(GL_DEPTH_TEST);

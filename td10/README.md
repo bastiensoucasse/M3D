@@ -29,3 +29,7 @@ Il est alors possible de calculer `M = T * B.inverse()` pour chaque rotule, et d
 ![renderings/skin-mat0.png](renderings/skin-mat0.png)
 ![renderings/skin-mat1.png](renderings/skin-mat1.png)
 ![renderings/skin-mat2.png](renderings/skin-mat2.png)
+
+Pour choisir quelle matrice utiliser selon le segment, il suffit de comparer la position actuelle sur l'axe _z_ avec la longueur des segments. On peut ainsi trouver sur quel segment la position se trouve.
+
+![renderings/skin-segment.png](renderings/skin-segment.png)
