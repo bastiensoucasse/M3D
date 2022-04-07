@@ -1,17 +1,17 @@
 #ifndef VIEWER_H
 #define VIEWER_H
 
+#include <iostream>
+
+#include "camera.h"
+#include "mesh.h"
 #include "opengl.h"
 #include "shader.h"
-#include "camera.h"
 #include "trackball.h"
-#include "mesh.h"
-
-#include <iostream>
 
 class Hit;
 
-class Viewer{
+class Viewer {
 public:
     //! Constructor
     Viewer();
@@ -32,33 +32,39 @@ public:
     void charPressed(int key);
 
 private:
-
-    bool pickAt(const Eigen::Vector2f &p, Hit &hit) const;
-    void setObjectMatrix(const Eigen::Matrix4f &M) const;
+    bool pickAt(const Eigen::Vector2f& p, Hit& hit) const;
+    void setObjectMatrix(const Eigen::Matrix4f& M) const;
     void drawArticulatedArm();
 
     int _winWidth, _winHeight;
 
     Camera _cam;
     Shader _shader;
-    Mesh   _scene;
-    Mesh   _sphere;
-    Mesh   _jointMesh;
-    Mesh   _segmentMesh;
+    Shader _shader2;
+    Mesh _scene;
+    Mesh _sphere;
+    Mesh _jointMesh;
+    Mesh _segmentMesh;
+    Mesh _cylinder;
+
+    int _texid;
 
     Eigen::Matrix2Xf _jointAngles;
     Eigen::VectorXf _lengths;
+    Eigen::Affine3f _M[3];
 
     Eigen::Vector3f _IK_target;
 
     bool _wireframe;
 
-
     // Mouse parameters for the trackball
-    enum TrackMode
-    {
-      TM_NO_TRACK=0, TM_ROTATE_AROUND, TM_ZOOM,
-      TM_LOCAL_ROTATE, TM_FLY_Z, TM_FLY_PAN
+    enum TrackMode {
+        TM_NO_TRACK = 0,
+        TM_ROTATE_AROUND,
+        TM_ZOOM,
+        TM_LOCAL_ROTATE,
+        TM_FLY_Z,
+        TM_FLY_PAN
     };
     TrackMode _trackingMode = TM_NO_TRACK;
     Trackball _trackball;

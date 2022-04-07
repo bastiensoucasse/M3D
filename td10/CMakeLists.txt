@@ -2,13 +2,15 @@ project(mds3d_td10)
 
 cmake_minimum_required(VERSION 3.2.0)
 
-add_subdirectory(ext/glfw)
 add_subdirectory(ext/glbinding)
+add_subdirectory(ext/glfw)
+add_subdirectory(ext/SOIL)
 
-include_directories(ext/glfw/include)
-include_directories(ext/glbinding/include)
+include_directories(ext)
 include_directories(ext/eigen3)
-include_directories(ext/)
+include_directories(ext/glbinding/include)
+include_directories(ext/glfw/include)
+include_directories(ext/SOIL/src)
 
 set (CMAKE_CXX_STANDARD 11)
 
@@ -39,7 +41,7 @@ add_definitions(-DDATA_DIR="${PROJECT_SOURCE_DIR}/data")
 
 add_executable(mds3d_glviewer ${SRC_FILES})
 
-target_link_libraries(mds3d_glviewer glfw ${GLFW_LIBRARIES} glbinding)
+target_link_libraries(mds3d_glviewer glfw ${GLFW_LIBRARIES} glbinding SOIL)
 
 function(IndicateExternalFile _target)
     foreach(_file IN ITEMS ${ARGN})

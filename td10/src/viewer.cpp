@@ -1,4 +1,5 @@
 #include "viewer.h"
+#include "SOIL2.h"
 #include "camera.h"
 
 using namespace Eigen;
@@ -21,10 +22,7 @@ Viewer::~Viewer()
 // initialize OpenGL context
 void Viewer::init(int w, int h)
 {
-
-    // Background color
     glClearColor(1.0, 1.0, 1.0, 0.0);
-
     loadShaders();
 
     if (!_scene.load(DATA_DIR "/models/scene.obj"))
@@ -43,6 +41,14 @@ void Viewer::init(int w, int h)
         exit(1);
     _segmentMesh.init();
 
+    if (!_cylinder.load(DATA_DIR "/models/grid.obj"))
+        exit(1);
+    _cylinder.init();
+
+    _texid = SOIL_load_OGL_texture(DATA_DIR "/textures/rainbow.png", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);
+    if (_texid == 0)
+        printf("SOIL loading error: '%s'\n", SOIL_last_result());
+
     reshape(w, h);
     _cam.setPerspective(float(M_PI) / 3.f, 0.3f, 20000.0f);
     _cam.lookAt(Vector3f(0, -6, 8), Vector3f(0, 0, 0), Vector3f(0, 0, 1));
@@ -52,9 +58,10 @@ void Viewer::init(int w, int h)
     _lengths.resize(nbSegments);
     _lengths << 1.7f, 1.5f, 1.2f;
     _jointAngles.resize(2, nbSegments);
-    _jointAngles << 45, 0, -30,
-        30, 20, -20;
-    // Convert degree to radian:
+    // _jointAngles << 45, 0, -30,
+    //     30, 20, -20;
+    _jointAngles << 0, 0, 0,
+        0, 0, 0;
     _jointAngles *= float(M_PI) / 180.f;
 
     glEnable(GL_DEPTH_TEST);
@@ -67,14 +74,19 @@ void Viewer::reshape(int w, int h)
     _cam.setViewport(w, h);
 }
 
-/*!
-   callback to draw graphic primitives
- */
 void Viewer::drawScene()
 {
-    // configure the rendering target size (viewport)
+    /**
+     * COMMON
+     */
+
     glViewport(0, 0, _winWidth, _winHeight);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    /**
+     * SHADER 1
+     */
+
     _shader.activate();
 
     glUniform1i(_shader.getUniformLocation("wireframe"), 0);
@@ -82,20 +94,19 @@ void Viewer::drawScene()
     glUniformMatrix4fv(_shader.getUniformLocation("proj_mat"), 1, GL_FALSE, _cam.projectionMatrix().data());
 
     Vector3f lightDir = Vector3f(1, 0, 1).normalized();
-    lightDir = (_cam.viewMatrix().topLeftCorner<3, 3>() * lightDir).normalized();
+    lightDir = (_cam.viewMatrix().topLeftCorner(3, 3) * lightDir).normalized();
     glUniform3fv(_shader.getUniformLocation("lightDir"), 1, lightDir.data());
 
-    Affine3f M;
-    M.setIdentity();
-    setObjectMatrix(M.matrix());
+    Affine3f T_shader1;
+    T_shader1.setIdentity();
+    setObjectMatrix(T_shader1.matrix());
     glUniform3fv(_shader.getUniformLocation("color"), 1, Vector3f(0.4, 0.4, 0.8).data());
     _scene.draw(_shader);
 
     drawArticulatedArm();
 
-    // draw target if defined:
     if (_IK_target.norm() > 0) {
-        setObjectMatrix((M * Translation3f(_IK_target) * Scaling(0.2f)).matrix());
+        setObjectMatrix((T_shader1 * Translation3f(_IK_target) * Scaling(0.2f)).matrix());
         glUniform3fv(_shader.getUniformLocation("color"), 1, Vector3f(0.4f, 0.8f, 0.4f).data());
         _sphere.draw(_shader);
     }
@@ -106,9 +117,9 @@ void Viewer::drawScene()
         glDepthFunc(GL_LEQUAL);
         glUniform1i(_shader.getUniformLocation("wireframe"), 1);
 
-        Affine3f M1;
-        M1.setIdentity();
-        setObjectMatrix(M1.matrix());
+        Affine3f T_shader1_wireframe;
+        T_shader1_wireframe.setIdentity();
+        setObjectMatrix(T_shader1_wireframe.matrix());
         glUniform3fv(_shader.getUniformLocation("color"), 1, Vector3f(0.4f, 0.4f, 0.8f).data());
         _scene.draw(_shader);
 
@@ -119,50 +130,134 @@ void Viewer::drawScene()
     }
 
     _shader.deactivate();
+
+    /**
+     * SHADER 2
+     */
+
+    _shader2.activate();
+
+    glUniformMatrix4fv(_shader2.getUniformLocation("view_mat"), 1, GL_FALSE, _cam.viewMatrix().data());
+    glUniformMatrix4fv(_shader2.getUniformLocation("proj_mat"), 1, GL_FALSE, _cam.projectionMatrix().data());
+
+    Affine3f T_shader2 = Affine3f::Identity();
+
+    glUniformMatrix4fv(_shader2.getUniformLocation("obj_mat"), 1, GL_FALSE, T_shader2.matrix().data());
+
+    Matrix4f matLocal2Cam = _cam.viewMatrix() * T_shader2.matrix();
+    Matrix3f matN = matLocal2Cam.topLeftCorner<3, 3>().inverse().transpose();
+    glUniformMatrix3fv(_shader2.getUniformLocation("normal_mat"), 1, GL_FALSE, matN.data());
+
+    glUniform3fv(_shader2.getUniformLocation("lightDir"), 1, lightDir.data());
+
+    glBindTexture(GL_TEXTURE_2D, _texid);
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(_shader2.getUniformLocation("colormap"), 0);
+
+    glUniform3fv(_shader2.getUniformLocation("L"), 1, _lengths.data());
+
+    glUniformMatrix4fv(_shader2.getUniformLocation("M"), 3, GL_FALSE, (GLfloat*)_M);
+
+    _cylinder.draw(_shader2);
+
+    _shader2.deactivate();
 }
 
-void Viewer::setObjectMatrix(const Matrix4f& M) const
+void Viewer::setObjectMatrix(const Matrix4f& transform_matrix) const
 {
-    glUniformMatrix4fv(_shader.getUniformLocation("obj_mat"), 1, GL_FALSE, M.data());
-    Matrix4f matLocal2Cam = _cam.viewMatrix() * M;
+    glUniformMatrix4fv(_shader.getUniformLocation("obj_mat"), 1, GL_FALSE, transform_matrix.data());
+    Matrix4f matLocal2Cam = _cam.viewMatrix() * transform_matrix;
     Matrix3f matN = matLocal2Cam.topLeftCorner<3, 3>().inverse().transpose();
     glUniformMatrix3fv(_shader.getUniformLocation("normal_mat"), 1, GL_FALSE, matN.data());
 }
 
 void Viewer::drawArticulatedArm()
 {
-    Affine3f M;
-    M.setIdentity();
+    const float jointScale = .2f;
 
-    float jointScale = 0.2f;
+    const int n = _lengths.size();
 
-    Vector3f phi = _jointAngles.row(0);
-    Vector3f theta = _jointAngles.row(1);
+    const Vector3f phi = _jointAngles.row(0);
+    const Vector3f theta = _jointAngles.row(1);
 
-    int n = int(_lengths.size()); // number of segments
+    Affine3f T { Affine3f::Identity() };
+    Affine3f B { Affine3f::Identity() };
+
     for (int i = 0; i < n; ++i) {
-        M *= AngleAxisf(phi[i], Vector3f::UnitZ());
+        T *= AngleAxisf(phi[i], Vector3f::UnitZ());
 
-        setObjectMatrix((M * Scaling(jointScale)).matrix());
+        setObjectMatrix((T * Scaling(jointScale)).matrix());
         glUniform3fv(_shader.getUniformLocation("color"), 1, Vector3f(0.8f, 0.4f, 0.4f).data());
         _jointMesh.draw(_shader);
 
-        M *= AngleAxisf(theta[i], Vector3f::UnitY());
-        Affine3f M_ = M * Scaling(1.f, 1.f, _lengths[i]);
+        T *= AngleAxisf(theta[i], Vector3f::UnitY());
 
-        setObjectMatrix(M_.matrix());
+        setObjectMatrix((T * Scaling(1.f, 1.f, _lengths[i])).matrix());
         glUniform3fv(_shader.getUniformLocation("color"), 1, Vector3f(0.8f, 0.8f, 0.4f).data());
         _segmentMesh.draw(_shader);
 
-        M *= Translation3f(0, 0, _lengths[i]);
+        _M[i] = T * B.inverse();
+
+        T *= Translation3f(0, 0, _lengths[i]);
+        B *= Translation3f(0, 0, _lengths[i]);
     }
 }
 
 void Viewer::updateAndDrawScene()
 {
     if (_IK_target.norm() > 0) {
-        // TODO: réaliser un pas d'IK vers _IK_target
+        /**
+         * Retrieve essential data.
+         */
+
+        const int n = _lengths.size();
+
+        const Vector3f phi = _jointAngles.row(0);
+        const Vector3f theta = _jointAngles.row(1);
+
+        /**
+         * Compute positions (Eigen Library).
+         */
+
+        Vector3f P[4];
+        Vector3f axes[3][2];
+        Affine3f transform_matrix = Affine3f::Identity();
+
+        for (int i = 0; i < 3; i++) {
+            P[i] = transform_matrix.translation();
+
+            transform_matrix *= AngleAxisf(phi[i], Vector3f::UnitZ());
+            axes[i][0] = transform_matrix.linear().col(2);
+
+            transform_matrix *= AngleAxisf(theta[i], Vector3f::UnitY());
+            axes[i][1] = transform_matrix.linear().col(1);
+
+            transform_matrix *= Translation3f(0, 0, _lengths[i]);
+        }
+
+        P[3] = transform_matrix.translation();
+
+        /**
+         * Compute Jacobian matrix.
+         */
+
+        Matrix<float, 3, 6> J;
+        for (int i = 0; i < 3; i++) {
+            J.col(2 * i) = axes[i][0].cross(P[3] - P[i]);
+            J.col(2 * i + 1) = axes[i][1].cross(P[3] - P[i]);
+        }
+
+        /**
+         * Update.
+         */
+
+        float delta_t = 0.01 * M_PI;
+        Vector3f delta_p = _IK_target - P[3];
+        VectorXf G = J.transpose() * delta_p;
+        Map<VectorXf> Q = VectorXf::Map(_jointAngles.data(), 6);
+        Q += delta_t * G;
     }
+
     drawScene();
 }
 
@@ -170,10 +265,11 @@ void Viewer::loadShaders()
 {
     // Here we can load as many shaders as we want, currently we have only one:
     _shader.loadFromFiles(DATA_DIR "/shaders/simple.vert", DATA_DIR "/shaders/simple.frag");
+    _shader2.loadFromFiles(DATA_DIR "/shaders/cylinder.vert", DATA_DIR "/shaders/cylinder.frag");
     checkError();
 }
 
-bool Viewer::pickAt(const Eigen::Vector2f& p, Hit& hit) const
+bool Viewer::pickAt(const Vector2f& p, Hit& hit) const
 {
     Matrix4f proj4 = _cam.projectionMatrix();
     Matrix3f proj3;
