@@ -2,7 +2,13 @@
 
 ## Rendu du bras articulé
 
-<!-- TODO -->
+Le premier problème fût un mauvais placement des joints et segments.
+
+![renderings/segments-and-joints-error.png](renderings/segments-and-joints-error.png)
+
+Les objets étaient en fait dessinés au mauvais moments et des rotations ou translations suivantes étaient appliquées dors et déjà. La version modifiée correspond à l'attente.
+
+![renderings/segments-and-joints.png](renderings/segments-and-joints.png)
 
 ## Cinématique inverse
 
@@ -33,3 +39,7 @@ Il est alors possible de calculer `M = T * B.inverse()` pour chaque rotule, et d
 Pour choisir quelle matrice utiliser selon le segment, il suffit de comparer la position actuelle sur l'axe _z_ avec la longueur des segments. On peut ainsi trouver sur quel segment la position se trouve.
 
 ![renderings/skin-segment.png](renderings/skin-segment.png)
+
+Pour mettre en place un skinning linéaire, on peut calculer un poids aux matrices `M[i]` appliquées aux points proches des articulations (relatif à la distance euclidienne) afin de modifier de manière linéaire l'angle de rotation autour des articulations.
+
+![renderings/skin-linear.png](renderings/skin-linear.png)
