@@ -2,6 +2,8 @@
 #include "SOIL2.h"
 #include "camera.h"
 
+#define SHADER_2 true
+
 using namespace Eigen;
 
 Viewer::Viewer()
@@ -133,32 +135,34 @@ void Viewer::drawScene()
      * SHADER 2
      */
 
-    _shader2.activate();
+    if (SHADER_2) {
+        _shader2.activate();
 
-    glUniformMatrix4fv(_shader2.getUniformLocation("view_mat"), 1, GL_FALSE, _cam.viewMatrix().data());
-    glUniformMatrix4fv(_shader2.getUniformLocation("proj_mat"), 1, GL_FALSE, _cam.projectionMatrix().data());
+        glUniformMatrix4fv(_shader2.getUniformLocation("view_mat"), 1, GL_FALSE, _cam.viewMatrix().data());
+        glUniformMatrix4fv(_shader2.getUniformLocation("proj_mat"), 1, GL_FALSE, _cam.projectionMatrix().data());
 
-    Affine3f T_shader2 = Affine3f::Identity();
+        Affine3f T_shader2 = Affine3f::Identity();
 
-    glUniformMatrix4fv(_shader2.getUniformLocation("obj_mat"), 1, GL_FALSE, T_shader2.matrix().data());
+        glUniformMatrix4fv(_shader2.getUniformLocation("obj_mat"), 1, GL_FALSE, T_shader2.matrix().data());
 
-    Matrix4f matLocal2Cam = _cam.viewMatrix() * T_shader2.matrix();
-    Matrix3f matN = matLocal2Cam.topLeftCorner<3, 3>().inverse().transpose();
-    glUniformMatrix3fv(_shader2.getUniformLocation("normal_mat"), 1, GL_FALSE, matN.data());
+        Matrix4f matLocal2Cam = _cam.viewMatrix() * T_shader2.matrix();
+        Matrix3f matN = matLocal2Cam.topLeftCorner<3, 3>().inverse().transpose();
+        glUniformMatrix3fv(_shader2.getUniformLocation("normal_mat"), 1, GL_FALSE, matN.data());
 
-    glUniform3fv(_shader2.getUniformLocation("lightDir"), 1, lightDir.data());
+        glUniform3fv(_shader2.getUniformLocation("lightDir"), 1, lightDir.data());
 
-    glBindTexture(GL_TEXTURE_2D, _texid);
-    glActiveTexture(GL_TEXTURE0);
-    glUniform1i(_shader2.getUniformLocation("colormap"), 0);
+        glBindTexture(GL_TEXTURE_2D, _texid);
+        glActiveTexture(GL_TEXTURE0);
+        glUniform1i(_shader2.getUniformLocation("colormap"), 0);
 
-    glUniform3fv(_shader2.getUniformLocation("L"), 1, _lengths.data());
+        glUniform3fv(_shader2.getUniformLocation("L"), 1, _lengths.data());
 
-    glUniformMatrix4fv(_shader2.getUniformLocation("M"), 3, GL_FALSE, (GLfloat*)_M);
+        glUniformMatrix4fv(_shader2.getUniformLocation("M"), 3, GL_FALSE, (GLfloat*)_M);
 
-    _cylinder.draw(_shader2);
+        _cylinder.draw(_shader2);
 
-    _shader2.deactivate();
+        _shader2.deactivate();
+    }
 }
 
 void Viewer::setObjectMatrix(const Matrix4f& transform_matrix) const

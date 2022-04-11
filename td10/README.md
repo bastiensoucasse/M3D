@@ -4,7 +4,9 @@
 
 Le premier problème fût un mauvais placement des joints et segments.
 
-![renderings/segments-and-joints-error.png](renderings/segments-and-joints-error.png)
+![renderings/segments-and-joints-error-1.png](renderings/segments-and-joints-error-1.png)
+
+![renderings/segments-and-joints-error-2.png](renderings/segments-and-joints-error-2.png)
 
 Les objets étaient en fait dessinés au mauvais moments et des rotations ou translations suivantes étaient appliquées dors et déjà. La version modifiée correspond à l'attente.
 
