@@ -19,8 +19,7 @@ in vec2 vtx_texcoord;
 out vec2 v_uv;
 out vec3 v_normal;
 
-vec3 cylinder(vec2 uv, vec3 A, vec3 B, float r)
-{
+vec3 cylinder(vec2 uv, vec3 A, vec3 B, float r) {
     float u = uv.x;
     float v = uv.y * 2 * M_PI;
 
@@ -75,16 +74,13 @@ vec3 cylinder(vec2 uv, vec3 A, vec3 B, float r)
 //     return p;
 // }
 
-vec3 bezier(float u, vec3 B[4], out mat3 F)
-{
+vec3 bezier(float u, vec3 B[4], out mat3 F) {
     vec3 beta[4];
-    for (int i = 0; i < 4; i++)
-        beta[i] = B[i];
+    for (int i = 0; i < 4; i++) beta[i] = B[i];
 
     vec3 p, dp, d2p;
     for (int i = 1; i < 4; i++) {
-        for (int j = 0; j < 4 - i; j++)
-            beta[j] = (1 - u) * beta[j] + u * beta[j + 1];
+        for (int j = 0; j < 4 - i; j++) beta[j] = (1 - u) * beta[j] + u * beta[j + 1];
 
         if (i == 1)
             d2p = cross(beta[1] - beta[2], beta[1] - beta[0]);
@@ -102,8 +98,7 @@ vec3 bezier(float u, vec3 B[4], out mat3 F)
     return p;
 }
 
-vec3 cylBezierYZ(float u, float v, vec3 B[4], float r, out vec3 n)
-{
+vec3 cylBezierYZ(float u, float v, vec3 B[4], float r, out vec3 n) {
     v *= 2 * M_PI;
 
     mat3 F;
@@ -116,17 +111,14 @@ vec3 cylBezierYZ(float u, float v, vec3 B[4], float r, out vec3 n)
     c /= cn;
 
     float theta = r_coef * u * 2 * M_PI;
-    mat3 r_mat = mat3(vec3(cos(theta), -sin(theta), 0),
-                      vec3(sin(theta), cos(theta), 0),
-                      vec3(0, 0, 1));
+    mat3 r_mat = mat3(vec3(cos(theta), -sin(theta), 0), vec3(sin(theta), cos(theta), 0), vec3(0, 0, 1));
     vec3 p = q + F * (r_mat * (r * c));
 
     n = normalize(normal_mat * (p - q));
     return p;
 }
 
-vec3 cylBezier(float u, float v, vec3 B[4], float r, out vec3 n)
-{
+vec3 cylBezier(float u, float v, vec3 B[4], float r, out vec3 n) {
     v *= 2 * M_PI;
 
     mat3 F;
@@ -137,17 +129,14 @@ vec3 cylBezier(float u, float v, vec3 B[4], float r, out vec3 n)
     c /= cn;
 
     float theta = r_coef * u * 2 * M_PI;
-    mat3 r_mat = mat3(vec3(cos(theta), -sin(theta), 0),
-                      vec3(sin(theta), cos(theta), 0),
-                      vec3(0, 0, 1));
+    mat3 r_mat = mat3(vec3(cos(theta), -sin(theta), 0), vec3(sin(theta), cos(theta), 0), vec3(0, 0, 1));
     vec3 p = q + F * (r_mat * (r * c));
 
     n = normalize(normal_mat * (p - q));
     return p;
-}   
+}
 
-void main()
-{
+void main() {
     v_uv = vtx_texcoord;
     v_normal = normalize(normal_mat * vtx_normal);
 

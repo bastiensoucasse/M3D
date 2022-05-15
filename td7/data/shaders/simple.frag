@@ -41,14 +41,14 @@ void main()
     mat3 tbn = mat3(t, b, n);
 
     // Activity version
-    // vec3 normal = normalize(normals_texture.rgb * 2 - 1);
-    // vec3 view = normalize(tbn * frag_view);
-    // vec3 light = normalize(tbn * light_direction);
+    vec3 normal = normalize(normals_texture.rgb * 2 - 1);
+    vec3 view = normalize(tbn * frag_view);
+    vec3 light = normalize(tbn * light_direction);
 
     // Lesson version
-    vec3 normal = normalize(tbn * (normals_texture.rgb * 2 - 1));
-    vec3 view = normalize(frag_view);
-    vec3 light = normalize(light_direction);
+    // vec3 normal = normalize(tbn * (normals_texture.rgb * 2 - 1));
+    // vec3 view = normalize(frag_view);
+    // vec3 light = normalize(light_direction);
 
     vec4 sc = vec4(1, 1, 1, 1);
     float s = 50;

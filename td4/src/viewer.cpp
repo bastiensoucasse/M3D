@@ -36,8 +36,7 @@ void Viewer::init(int w, int h)
     _cam.lookAt(
         Vector3f(-2.f, 2, -2.f),
         Vector3f(0.f, 0.f, 0.f),
-        Vector3f(0.f, 1.f, 0.f)
-    );
+        Vector3f(0.f, 1.f, 0.f));
     _trackball.setCamera(&_cam);
 
     glClearColor(0.5, 0.5, 0.5, 1);
@@ -65,9 +64,10 @@ void Viewer::drawScene()
 
     glUniform1i(_shader.getUniformLocation("wireframe"), 0);
 
-    Matrix4f transform;
-    transform.setIdentity();
-    glUniformMatrix4fv(_shader.getUniformLocation("transform"), 1, GL_FALSE, transform.data());
+    Affine3f A = Affine3f::Identity();
+    Vector3f d = Vector3f(1, 1, 1).normalized();
+    A *= AngleAxisf(acos(d.dot(Vector3f::UnitY())), d.cross(Vector3f::UnitY()));
+    glUniformMatrix4fv(_shader.getUniformLocation("transform"), 1, GL_FALSE, A.matrix().data());
 
     Matrix4f view = _cam.viewMatrix();
     glUniformMatrix4fv(_shader.getUniformLocation("view"), 1, GL_FALSE, view.data());

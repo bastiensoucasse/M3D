@@ -99,7 +99,7 @@ void Viewer::drawScene()
     glUniform3fv(_shader.getUniformLocation("light_direction"), 1, light_direction.data());
 
     Vector3f light_color = Vector3f(1, 1, 1);
-    glUniform3fv(_shader.getUniformLocation("light_color"), 1, light_color.data());
+    glUniform3fv(_shader.getUniformLoÈ†cation("light_color"), 1, light_color.data());
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _texId0);

@@ -8,11 +8,10 @@ uniform sampler2D colormap;
 
 out vec4 out_color;
 
-vec3 shade(vec3 n, vec3 l, vec3 dCol)
-{
+vec3 shade(vec3 n, vec3 l, vec3 dCol) {
     // cosine shading
-    float dc = 0.5 * dot(n,l) + 0.5;
-    return dc*dCol;
+    float dc = 0.5 * dot(n, l) + 0.5;
+    return dc * dCol;
 }
 
 void main(void) {
@@ -22,5 +21,5 @@ void main(void) {
 
     vec3 col = shade(normalize(v_normal), lightDir, texColor);
 
-    out_color = vec4(ambient * texColor + col,1.0);
+    out_color = vec4(ambient * texColor + col, 1.0);
 }
